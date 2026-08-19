@@ -1,5 +1,5 @@
 // Nour — fonction serveur (proxy vers Groq, gratuit et mondial).
-// Variables Netlify : GROQ_API_KEY (obligatoire, commence par gsk_...), NOUR_CODE (optionnel).
+// Variables Netlify : GROQ_API_KEY (obligatoire, gsk_...), NOUR_CODE (optionnel).
 // Réponse renvoyée au format Gemini pour que l'appli marche sans modification.
 
 exports.handler = async (event) => {
@@ -25,7 +25,6 @@ exports.handler = async (event) => {
   try { payload = JSON.parse(event.body || '{}'); }
   catch (e) { return { statusCode: 400, headers: JSONH, body: JSON.stringify({ error: 'Requête invalide.' }) }; }
 
-  // Gemini (system_instruction + contents) -> Groq (messages)
   const sys = ((payload.system_instruction && payload.system_instruction.parts) || []).map(p => p.text).join('\n');
   const turns = (payload.contents || []).map(c => ({
     role: c.role === 'model' ? 'assistant' : 'user',
@@ -35,13 +34,13 @@ exports.handler = async (event) => {
   if (sys) messages.push({ role: 'system', content: sys });
   for (const t of turns) messages.push(t);
 
-  // Plusieurs modèles Groq en secours (les noms évoluent).
-  const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it', 'llama3-70b-8192', 'llama3-8b-8192'];
+  // Modèles Groq ACTUELS (2026).
+  const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it'];
 
   const wrapGemini = (text) => JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] });
   const spoken = (reply) => wrapGemini(JSON.stringify({ reply, tip: '', score: null, done: false, memo: '', level: null }));
 
-  let lastErr = '';
+  const errs = [];
   for (const model of models) {
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -55,21 +54,21 @@ exports.handler = async (event) => {
       if (res.ok) {
         const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
         if (text) return { statusCode: 200, headers: JSONH, body: wrapGemini(text) };
-        lastErr = 'réponse vide';
+        errs.push(model + ': réponse vide');
         continue;
       }
-      lastErr = (data.error && (data.error.message || data.error.code)) || ('HTTP ' + res.status + ' ' + raw.slice(0, 140));
-      // clé invalide -> inutile d'essayer d'autres modèles
-      if (res.status === 401 || res.status === 403) break;
-      // sinon (modèle absent 404, requête 400, etc.) -> modèle suivant
+      const em = (data.error && (data.error.message || data.error.code)) || ('HTTP ' + res.status);
+      errs.push(model + ': ' + em);
+      if (res.status === 401 || res.status === 403) break; // clé -> inutile de continuer
     } catch (err) {
-      lastErr = 'réseau: ' + (err && err.message ? err.message : 'inconnu');
+      errs.push(model + ': réseau ' + (err && err.message ? err.message : ''));
     }
   }
 
+  const joined = errs.join(' || ');
   let reply;
-  if (/invalid|api key|unauthor|401|403/i.test(lastErr)) reply = "La clé Groq du serveur semble invalide (vérifie GROQ_API_KEY sur Netlify).";
-  else if (/rate|quota|limit|429/i.test(lastErr)) reply = "Trop de demandes d'un coup. Attends une minute puis reparle-moi.";
-  else reply = "Souci côté serveur : " + lastErr;
+  if (/invalid|api key|unauthor|401|403/i.test(joined)) reply = "La clé Groq du serveur semble invalide (vérifie GROQ_API_KEY sur Netlify).";
+  else if (/rate|quota|limit|429/i.test(joined)) reply = "Trop de demandes d'un coup. Attends une minute puis reparle-moi.";
+  else reply = "Souci côté serveur : " + joined;
   return { statusCode: 200, headers: JSONH, body: spoken(reply) };
 };
