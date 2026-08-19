@@ -1,0 +1,7 @@
+# Configuration Netlify pour Nour
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Nour — ta prof d'éloquence</title>
+<style>
+  :root{
+    --bg:#fbf8f2; --bg2:#f3ecdf; --card:#ffffff; --line:#ece3d5;
+    --ink:#3a3630; --muted:#8c8578;
+    --accent:#e0a94f; --accent-d:#cf9235; --accent-soft:#f7e6c6;
+    --sky:#bcd8e6; --sky-soft:#e6f1f6; --rose:#f0c9c0; --good:#6cc194; --good-d:#4fa87a;
+    --gold:#e9b84a; --lock:#d8d0c2;
+    --skin:#f3d3b5; --skin-sh:#e9bd97; --hair:#5a4634; --lip:#cf8b7d;
+    --shadow:0 10px 30px rgba(150,120,70,.13); --shadow-s:0 4px 12px rgba(150,120,70,.12);
+    --r:20px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%,var(--bg),var(--bg2));color:var(--ink);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .app{width:100%;max-width:560px;padding:12px 14px 26px;display:flex;flex-direction:column;min-height:100vh}
+  button{font-family:inherit}
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .brand{display:flex;align-items:center;gap:7px;font-weight:700;font-size:15px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+  .stats{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .stat{display:flex;align-items:center;gap:4px;font-weight:700;font-size:13.5px;background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:5px 10px;box-shadow:var(--shadow-s)}
+  .stat.flame{color:#e07a3f} .stat.xp{color:var(--accent-d)} .stat.lvl{color:var(--good-d)}
+  .gear{background:var(--card);border:1px solid var(--line);border-radius:10px;width:32px;height:32px;font-size:15px;cursor:pointer}
+  .langmini{display:flex;gap:4px;margin-bottom:10px;justify-content:center}
+  .langmini button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .langmini button.active{background:var(--sky);border-color:var(--sky);color:#20536a;font-weight:700}
+
+  /* daily goal bar */
+  .goal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 12px;margin-bottom:12px;box-shadow:var(--shadow-s)}
+  .goal .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .bar{height:9px;background:var(--bg2);border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--good),var(--accent));width:0;transition:width .5s}
+
+  /* ---------- MAP ---------- */
+  .view{display:none} .view.active{display:block;animation:fade .25s}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .quick{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;margin-bottom:14px;box-shadow:var(--shadow-s)}
+  .quick h3{margin:0 0 4px;font-size:14px}
+  .quick p{margin:0 0 9px;font-size:12px;color:var(--muted)}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 12px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:5px}
+  .chip .em{font-size:14px}
+  .chip:active{transform:scale(.97)}
+
+  .unit{margin:18px 0 6px}
+  .unit-banner{background:linear-gradient(160deg,var(--accent),var(--accent-d));color:#fff;border-radius:16px;
+    padding:12px 15px;font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow)}
+  .unit-banner .em{font-size:20px}
+  .unit-banner small{display:block;font-weight:500;font-size:11.5px;opacity:.9;margin-top:2px}
+  .path{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0}
+  .node-row{width:100%;display:flex;justify-content:center;position:relative}
+  .node{width:66px;height:66px;border-radius:50%;border:none;cursor:pointer;position:relative;
+    display:grid;place-items:center;font-size:26px;box-shadow:var(--shadow);transition:.15s}
+  .node:active{transform:scale(.94)}
+  .node.done{background:linear-gradient(160deg,var(--gold),#d3a02f);color:#fff}
+  .node.open{background:linear-gradient(160deg,#fff,#fbf0d8);border:3px solid var(--accent);color:var(--accent-d);animation:bob 2s ease-in-out infinite}
+  .node.locked{background:var(--lock);color:#fff;cursor:not-allowed;box-shadow:none}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .node .badge{position:absolute;bottom:-4px;right:-4px;background:#fff;border-radius:50%;width:22px;height:22px;
+    display:grid;place-items:center;font-size:12px;box-shadow:var(--shadow-s)}
+  .node-label{font-size:11.5px;color:var(--muted);text-align:center;max-width:120px;margin-top:3px;line-height:1.25}
+  .n-off-l{margin-right:70px} .n-off-r{margin-left:70px}
+  .node.open::after{content:"COMMENCER";position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+    background:var(--accent);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:8px;white-space:nowrap}
+
+  /* ---------- SESSION ---------- */
+  .sess-head{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .back{background:var(--card);border:1px solid var(--line);border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer}
+  .sess-title{font-size:13.5px;font-weight:700;line-height:1.2}
+  .sess-title small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+  .stage{display:flex;flex-direction:column;align-items:center;margin-top:2px}
+  .halo{position:relative;width:200px;height:200px;display:grid;place-items:center}
+  .halo::before{content:"";position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--sky-soft),transparent 70%);transition:.4s}
+  .halo.listening::before{background:radial-gradient(circle at 50% 40%,#d7ecdc,transparent 68%);animation:pulse 1.6s infinite}
+  .halo.speaking::before{background:radial-gradient(circle at 50% 40%,var(--accent-soft),transparent 68%)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(108,193,148,.45)}70%{box-shadow:0 0 0 24px rgba(108,193,148,0)}100%{box-shadow:0 0 0 0 rgba(108,193,148,0)}}
+  #avatar{width:182px;height:182px;z-index:2;transform-origin:50% 90%;animation:breathe 4.5s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:translateY(0) rotate(-.3deg)}50%{transform:translateY(-4px) rotate(.3deg)}}
+  .status-chip{margin-top:4px;font-size:12px;color:var(--muted);min-height:16px;text-align:center}
+  .caption{margin:10px 0 4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 15px;font-size:15px;line-height:1.5;box-shadow:var(--shadow);min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center}
+  .caption.ar{direction:rtl;font-family:"Traditional Arabic","Amiri",serif;font-size:18px}
+  .caption.interim{color:var(--muted);font-style:italic}
+  .tip{background:var(--sky-soft);border:1px solid var(--sky);border-radius:14px;padding:10px 13px;font-size:13px;margin:2px 0 4px;display:none;gap:7px;line-height:1.5}
+  .tip.show{display:flex;animation:fade .3s} .tip b{color:#3f7a91}
+  .scorebar{display:none;align-items:center;gap:8px;margin:2px 0 4px;font-size:12px;color:var(--muted)}
+  .scorebar.show{display:flex}
+  .scorebar .bar{flex:1}
+  .spacer{flex:1 1 auto;min-height:8px}
+  .mic-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:6px}
+  .mic{width:84px;height:84px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(160deg,var(--accent),var(--accent-d));color:#fff;font-size:32px;box-shadow:0 12px 28px rgba(224,169,79,.4);transition:.15s;display:grid;place-items:center}
+  .mic:active{transform:scale(.94)} .mic.on{background:linear-gradient(160deg,#e88a7a,#d76b58);animation:micp 1.3s infinite}
+  .mic.busy{background:#cbb998;box-shadow:none;cursor:default}
+  @keyframes micp{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .mic-label{font-size:12.5px;color:var(--muted)}
+  .row{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+  .sbtn{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:15px;cursor:pointer}
+  .textfb{display:none;width:100%;gap:8px;margin-top:6px} .textfb.show{display:flex}
+  .textfb input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:14px;background:var(--card);color:var(--ink)}
+  .textfb button{border:none;background:var(--accent);color:#fff;border-radius:12px;padding:0 15px;font-weight:600;cursor:pointer}
+  .warnbox{background:#fdf0e7;border:1px solid var(--rose);border-radius:12px;padding:8px 11px;font-size:12px;color:#a05a3f;margin-top:8px;display:none}
+  .warnbox.show{display:block}
+
+  /* modal & celebrate */
+  .overlay{position:fixed;inset:0;background:rgba(58,54,48,.5);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:20px;max-width:460px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+  .modal h3{margin:0 0 4px;font-size:17px} .modal p{font-size:13px;color:var(--muted);line-height:1.55;margin:8px 0}
+  .modal ol{font-size:13px;line-height:1.6;padding-inline-start:20px} .modal a{color:var(--accent-d);font-weight:600}
+  .modal input{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;font-size:14px;margin:6px 0;background:var(--bg);color:var(--ink)}
+  .modal .close{float:right;border:none;background:var(--bg);border-radius:10px;width:32px;height:32px;cursor:pointer;font-size:16px}
+  .keyok{font-size:12px;color:var(--good-d);font-weight:600}
+  .free{display:inline-block;background:#e4f4ea;color:#2f8a5c;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-left:6px}
+  .celebrate{text-align:center}
+  .celebrate .big{font-size:54px;animation:pop .5s} @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .celebrate h3{font-size:20px;margin:8px 0 2px} .celebrate .xpwon{color:var(--accent-d);font-weight:700;font-size:15px;margin:6px 0}
+  .celebrate .keep{color:var(--muted);font-size:13px;margin:8px 0 14px}
+  .btn{border:none;border-radius:14px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);width:100%}
+  .btn.primary{background:linear-gradient(160deg,var(--good),var(--good-d));color:#fff}
+  .btn.accent{background:linear-gradient(160deg,var(--accent),var(--accent-d));color:#fff}
+  .btn.soft{background:var(--bg);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .chips.settings-chips{margin:6px 0 10px}
+  .chip.sky.active{background:var(--sky);border-color:var(--sky);color:#20536a;font-weight:700}
+  h2.sec{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:12px 0 6px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>Nour</div>
+    <div class="stats">
+      <span class="stat flame" title="Série de jours">🔥<span id="stStreak">0</span></span>
+      <span class="stat xp" title="Points">⭐<span id="stXp">0</span></span>
+      <span class="stat lvl" title="Niveau">🎓<span id="stLvl">1</span></span>
+      <button class="gear" id="gear">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ============ VUE PARCOURS ============ -->
+  <div class="view active" id="view-map">
+    <div class="langmini" id="langMini"></div>
+    <div class="goal">
+      <div class="lab"><span>🎯 Objectif du jour</span><span id="goalTxt">0 / 40 XP</span></div>
+      <div class="bar"><i id="goalBar"></i></div>
+    </div>
+
+    <button class="btn accent" id="placementBtn" style="margin-bottom:12px">🎯 Bilan de niveau parlé — Nour t'évalue</button>
+
+    <div class="quick">
+      <h3>🎙️ Entraînement libre</h3>
+      <p>Parle avec Nour sans leçon : elle s'adapte à toi.</p>
+      <div class="chips" id="freeChips"></div>
+    </div>
+
+    <div id="mapContent"></div>
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">Nour est ta prof : elle explique, te fait pratiquer à voix haute, te note et débloque la suite. Progresse un peu chaque jour. 🌱</p>
+  </div>
+
+  <!-- ============ VUE SESSION ============ -->
+  <div class="view" id="view-sess">
+    <div class="sess-head">
+      <button class="back" id="backBtn">←</button>
+      <div class="sess-title" id="sessTitle">Séance<small id="sessSub"></small></div>
+    </div>
+    <div class="stage">
+      <div class="halo" id="halo">
+        <svg id="avatar" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="skinG" cx="45%" cy="40%" r="70%"><stop offset="0%" stop-color="#f7ddc2"/><stop offset="100%" stop-color="var(--skin)"/></radialGradient>
+            <linearGradient id="hairG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6b543e"/><stop offset="100%" stop-color="var(--hair)"/></linearGradient>
+            <linearGradient id="clothG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#cfe0e8"/><stop offset="100%" stop-color="#aecad6"/></linearGradient>
+          </defs>
+          <path d="M35 200 Q40 150 70 138 L130 138 Q160 150 165 200 Z" fill="url(#clothG)"/>
+          <path d="M84 140 L116 140 L116 155 Q100 166 84 155 Z" fill="var(--skin-sh)"/>
+          <rect x="88" y="120" width="24" height="26" rx="11" fill="var(--skin-sh)"/>
+          <path d="M52 96 Q46 44 100 40 Q154 44 148 96 L148 120 Q150 78 100 74 Q50 78 52 120 Z" fill="url(#hairG)"/>
+          <ellipse cx="55" cy="98" rx="8" ry="12" fill="url(#skinG)"/><ellipse cx="145" cy="98" rx="8" ry="12" fill="url(#skinG)"/>
+          <path d="M58 92 Q58 145 100 150 Q142 145 142 92 Q142 52 100 50 Q58 52 58 92 Z" fill="url(#skinG)"/>
+          <ellipse cx="74" cy="108" rx="9" ry="6" fill="#f3b6a6" opacity=".45"/><ellipse cx="126" cy="108" rx="9" ry="6" fill="#f3b6a6" opacity=".45"/>
+          <path d="M70 80 Q80 74 90 79" stroke="#7a5f45" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M110 79 Q120 74 130 80" stroke="#7a5f45" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <g id="eyes">
+            <ellipse cx="80" cy="92" rx="7.5" ry="8.5" fill="#fff"/><ellipse cx="120" cy="92" rx="7.5" ry="8.5" fill="#fff"/>
+            <circle id="pupL" cx="80" cy="93" r="4.2" fill="#4b3a2a"/><circle id="pupR" cx="120" cy="93" r="4.2" fill="#4b3a2a"/>
+            <circle cx="82" cy="91" r="1.3" fill="#fff"/><circle cx="122" cy="91" r="1.3" fill="#fff"/>
+          </g>
+          <rect id="lidL" x="71" y="83" width="18" height="0" rx="4" fill="url(#skinG)"/><rect id="lidR" x="111" y="83" width="18" height="0" rx="4" fill="url(#skinG)"/>
+          <path d="M100 96 Q104 108 99 112" stroke="var(--skin-sh)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M56 90 Q50 46 100 42 Q150 46 144 90 Q140 66 100 64 Q78 64 70 76 Q64 82 56 90 Z" fill="url(#hairG)"/>
+          <g id="mouthG"><path id="mouth" d="M86 124 Q100 130 114 124 Q100 128 86 124 Z" fill="var(--lip)"/></g>
+        </svg>
+      </div>
+      <div class="status-chip" id="statusChip">Touche le micro pour parler 🎙️</div>
+    </div>
+    <div class="caption" id="caption">…</div>
+    <div class="tip" id="tip"><b>💡</b><span id="tipText"></span></div>
+    <div class="scorebar" id="scorebar"><span>Note</span><div class="bar" style="height:8px"><i id="scoreBar" style="background:linear-gradient(90deg,var(--good),var(--accent))"></i></div><span id="scoreVal">–</span></div>
+    <div class="spacer"></div>
+    <div class="mic-wrap">
+      <button class="mic" id="mic">🎙️</button>
+      <div class="mic-label" id="micLabel">Touche pour parler</div>
+      <div class="row">
+        <button class="sbtn" id="keyboardBtn" title="Écrire">⌨️</button>
+        <button class="sbtn" id="repeatBtn" title="Répéter">🔁</button>
+        <button class="sbtn" id="stopBtn" title="Silence">🤫</button>
+      </div>
+      <div class="textfb" id="textfb"><input id="textInput" placeholder="Écris ta réponse…" autocomplete="off"><button id="sendText">→</button></div>
+      <div class="warnbox" id="warnbox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL RÉGLAGES / CLÉ ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="settingsModal">
+    <button class="close" id="closeModal">✕</button>
+    <h3>⚙️ Réglages</h3>
+    <h2 class="sec">Ton niveau (Nour s'y adapte)</h2>
+    <div class="chips settings-chips" id="levelChips"></div>
+    <h2 class="sec">👧 Mode enfant (à partir de 10 ans)</h2>
+    <div class="chips settings-chips" id="kidChips"></div>
+    <h2 class="sec">🧠 Ce que Nour a appris sur toi</h2>
+    <div id="memoryList" style="font-size:12.5px;color:var(--muted);line-height:1.6"></div>
+    <button class="btn soft" id="clearMemory" style="margin-top:6px">Effacer la mémoire</button>
+    <h2 class="sec">🔒 Code d'accès <span class="free">DÉJÀ CONNECTÉ</span></h2>
+    <p>Le cerveau de Nour est déjà branché sur le serveur : aucune clé à coller. Si l'accès est protégé par un code, saisis-le ici (une seule fois).</p>
+    <input id="keyInput" type="password" placeholder="Code d'accès (si demandé)">
+    <div id="keyStatus" class="keyok"></div>
+    <h2 class="sec">Modèle</h2>
+    <div class="chips settings-chips" id="modelChips"></div>
+    <button class="btn accent" id="saveKey" style="margin-top:8px">💾 Enregistrer</button>
+    <p style="margin-top:10px">Micro : au 1er usage, autorise le micro. Il faut ouvrir la page en <b>https://</b> (Netlify) pour qu'il marche.</p>
+    <button class="btn soft" id="resetProg" style="margin-top:6px">↺ Réinitialiser ma progression</button>
+  </div>
+</div>
+
+<!-- ============ CELEBRATE ============ -->
+<div class="overlay" id="celebrate">
+  <div class="modal celebrate">
+    <div class="big" id="celEmoji">🎉</div>
+    <h3 id="celTitle">Leçon réussie !</h3>
+    <div class="xpwon" id="celXp">+20 XP</div>
+    <div class="keep" id="celKeep"></div>
+    <button class="btn primary" id="celNext">Leçon suivante →</button>
+    <button class="btn soft" id="celMap" style="margin-top:8px">Retour au parcours</button>
+  </div>
+</div>
+
+<script>
+/* ================= CURRICULUM (inspiré des grands orateurs) ================= */
+const CURRICULUM = [
+  {unit:"Fondations de la parole", sub:"Poser sa voix et sa pensée", em:"🌱", lessons:[
+    {id:"f1",title:"Se présenter avec assurance",obj:"te présenter en 3 phrases claires et posées",tech:"structure simple + posture vocale",orator:"les grands orateurs commencent ancrés, lents et sûrs"},
+    {id:"f2",title:"Le pouvoir de la pause",obj:"placer un silence juste avant le mot important",tech:"le rythme et la pause",orator:"Churchill laissait respirer ses phrases pour donner du poids"},
+    {id:"f3",title:"Une idée, une phrase",obj:"exprimer une idée en une phrase nette",tech:"clarté et concision",orator:"« Ce que l'on conçoit bien s'énonce clairement » — Boileau"}
+  ]},
+  {unit:"L'art d'accrocher", sub:"Capter l'attention en 10 secondes", em:"🎣", lessons:[
+    {id:"a1",title:"L'accroche percutante",obj:"ouvrir par une question, une image ou un chiffre fort",tech:"l'accroche d'ouverture",orator:"les grands discours s'ouvrent par un choc"},
+    {id:"a2",title:"La règle de trois",obj:"formuler une idée en trois temps",tech:"le tricolon",orator:"Churchill et Steve Jobs structuraient par trois"},
+    {id:"a3",title:"L'anaphore",obj:"répéter une même formule pour marteler l'idée",tech:"la répétition rythmique",orator:"« I have a dream » — Martin Luther King"}
+  ]},
+  {unit:"Raconter pour convaincre", sub:"Le storytelling", em:"📖", lessons:[
+    {id:"s1",title:"Le mini-récit",obj:"raconter une histoire courte : personnage, obstacle, changement",tech:"le storytelling",orator:"Barack Obama convainquait par des histoires vécues"},
+    {id:"s2",title:"L'exemple concret",obj:"appuyer une idée par un exemple précis",tech:"l'illustration",orator:"un bon orateur montre au lieu d'affirmer"},
+    {id:"s3",title:"La métaphore qui frappe",obj:"créer une image mémorable",tech:"la métaphore",orator:"les grandes formules vivent par leurs images"}
+  ]},
+  {unit:"L'argumentation solide", sub:"Structurer sa pensée", em:"🧱", lessons:[
+    {id:"r1",title:"Thèse, argument, exemple",obj:"défendre une idée en trois blocs enchaînés",tech:"la structure argumentative",orator:"la rhétorique classique de Cicéron"},
+    {id:"r2",title:"Répondre en 30 secondes (PREP)",obj:"Point, Raison, Exemple, Point",tech:"le cadre PREP",orator:"la répartie structurée des grands débatteurs"},
+    {id:"r3",title:"Réfuter une objection",obj:"démonter un contre-argument avec calme",tech:"la réfutation",orator:"l'art du débat contradictoire"}
+  ]},
+  {unit:"Débat & répartie", sub:"Répondre du tac au tac", em:"⚔️", lessons:[
+    {id:"d1",title:"La concession stratégique",obj:"« Tu as raison sur…, mais l'essentiel est… »",tech:"concéder pour mieux recadrer",orator:"technique des grands débatteurs"},
+    {id:"d2",title:"La question qui reprend la main",obj:"répondre par une question qui recadre le débat",tech:"le recadrage",orator:"Socrate et l'art du questionnement"},
+    {id:"d3",title:"La répartie",obj:"répondre du tac au tac, avec justesse et esprit",tech:"la punchline",orator:"l'esprit d'à-propos de Cicéron et des grands débats télévisés"},
+    {id:"d4",title:"Garder son calme sous le feu",obj:"rester posée et digne face à une attaque",tech:"la maîtrise émotionnelle",orator:"le sang-froid des grands orateurs"}
+  ]},
+  {unit:"Charisme & présence", sub:"Incarner ta parole", em:"✨", lessons:[
+    {id:"c1",title:"Parler avec conviction",obj:"défendre une idée qui te touche vraiment",tech:"l'engagement sincère",orator:"on suit celui qui croit à ce qu'il dit"},
+    {id:"c2",title:"Varier la voix",obj:"jouer sur l'intonation, le volume et le débit",tech:"la modulation vocale",orator:"la voix des grands orateurs est une musique"},
+    {id:"c3",title:"La chute mémorable",obj:"conclure par une formule qui reste",tech:"la clausule finale",orator:"« Rien n'est plus fort qu'une idée dont l'heure est venue » — Hugo"}
+  ]}
+];
+const LESSONS = CURRICULUM.flatMap(u=>u.lessons);
+const LID = LESSONS.map(l=>l.id);
+
+const MODES = {
+  conversation:{em:"💬",label:"Conversation",desc:"une conversation libre et vivante, vocabulaire riche",rule:"Discute naturellement, pose des questions ouvertes pour la faire parler. Glisse parfois un mot technique ou intellectuel bien employé."},
+  debat:{em:"⚖️",label:"Débat",desc:"un débat où tu prends le camp adverse",rule:"Prends la position CONTRAIRE, arguments solides mais bienveillants. Pousse-la à structurer, relance par une objection percutante."},
+  discours:{em:"🎤",label:"Discours",desc:"un discours devant public / impro",rule:"Donne un sujet court, réagis comme un public, évalue accroche, structure, conclusion, assurance."},
+  correction:{em:"📝",label:"Correction",desc:"corriger et polir sa langue",rule:"Reformule proprement, corrige les fautes, propose un mot plus juste ou une tournure plus élégante."}
+};
+const LANGS = {
+  FR:{label:"Français",em:"🇫🇷",speak:"fr-FR",rec:"fr-FR",name:"le français"},
+  AR:{label:"العربية",em:"🇸🇦",speak:"ar-SA",rec:"ar-SA",name:"l'arabe"},
+  EN:{label:"English",em:"🇬🇧",speak:"en-US",rec:"en-US",name:"l'anglais"}
+};
+const LEVELS = {debutant:"Débutant",intermediaire:"Intermédiaire",avance:"Avancé"};
+const MODELS = {"gemini-2.0-flash":"⚡ Gemini 2.0 Flash","gemini-1.5-flash":"🛟 1.5 Flash (secours)"};
+const GOAL=40, XP_ATTEMPT=5, XP_LESSON=20;
+
+/* ================= ÉTAT + PROGRESSION ================= */
+const $=s=>document.querySelector(s);
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+let prog = JSON.parse(localStorage.getItem('nour_prog')||'null') || {
+  xp:0, streak:0, lastDay:'', todayXp:0, todayDay:'', done:{}, bands:{FR:'intermediaire',AR:'intermediaire',EN:'debutant'}
+};
+if(!prog.memory) prog.memory=[];
+let cfg = {
+  lang: localStorage.getItem('nour_lang')||'FR',
+  model: localStorage.getItem('nour_gmodel')||'gemini-2.0-flash',
+  kidMode: localStorage.getItem('nour_kid')==='1'
+};
+function saveProg(){ localStorage.setItem('nour_prog',JSON.stringify(prog)); }
+function saveCfg(){ localStorage.setItem('nour_lang',cfg.lang); localStorage.setItem('nour_gmodel',cfg.model); localStorage.setItem('nour_kid',cfg.kidMode?'1':'0'); }
+function levelOf(xp){ return 1+Math.floor(xp/100); }
+function touchStreak(){ const t=todayStr(); if(prog.lastDay===t) return;
+  const y=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  prog.streak = (prog.lastDay===y)? (prog.streak+1) : 1; prog.lastDay=t; saveProg(); }
+function addXp(n){ const t=todayStr(); if(prog.todayDay!==t){ prog.todayDay=t; prog.todayXp=0; }
+  prog.xp+=n; prog.todayXp+=n; saveProg(); renderStats(); }
+function lessonUnlocked(i){ if(i===0) return true; return !!prog.done[LID[i-1]]; }
+
+/* ================= RENDER STATS + GOAL ================= */
+function renderStats(){
+  $('#stStreak').textContent=prog.streak; $('#stXp').textContent=prog.xp; $('#stLvl').textContent=levelOf(prog.xp);
+  const t=todayStr(); const tx=(prog.todayDay===t)?prog.todayXp:0;
+  $('#goalTxt').textContent=Math.min(tx,GOAL)+' / '+GOAL+' XP';
+  $('#goalBar').style.width=Math.min(100,tx/GOAL*100)+'%';
+}
+
+/* ================= MAP ================= */
+function renderMap(){
+  const c=$('#mapContent'); c.innerHTML=''; let idx=0;
+  CURRICULUM.forEach(u=>{
+    const ub=document.createElement('div'); ub.className='unit';
+    ub.innerHTML=`<div class="unit-banner"><span class="em">${u.em}</span><div>${u.unit}<small>${u.sub}</small></div></div><div class="path"></div>`;
+    const path=ub.querySelector('.path');
+    u.lessons.forEach((l,j)=>{
+      const gi=idx; const open=lessonUnlocked(gi); const done=!!prog.done[l.id];
+      const row=document.createElement('div'); row.className='node-row';
+      const btn=document.createElement('button');
+      btn.className='node '+(done?'done':(open?'open':'locked'))+' '+(j%2? 'n-off-r':'n-off-l');
+      btn.innerHTML=(done?'✓':(open?u.em:'🔒'))+(done?`<span class="badge">${prog.done[l.id]}</span>`:'');
+      btn.onclick=()=>{ if(!open){ toast("Termine la leçon précédente d'abord 🙂"); return;} startLesson(l); };
+      const lab=document.createElement('div'); lab.className='node-label'; lab.textContent=l.title;
+      const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.alignItems='center';
+      wrap.appendChild(btn); wrap.appendChild(lab); row.appendChild(wrap); path.appendChild(row);
+      idx++;
+    });
+    c.appendChild(ub);
+  });
+}
+let toastT=null;
+function toast(msg){ let el=document.getElementById('_toast'); if(!el){ el=document.createElement('div'); el.id='_toast';
+    el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.3)'; document.body.appendChild(el);}
+  el.textContent=msg; el.style.opacity='1'; clearTimeout(toastT); toastT=setTimeout(()=>el.style.opacity='0',2600); }
+
+/* ================= AVATAR ================= */
+let mouthTimer=null;
+const MS={closed:"M86 124 Q100 128 114 124 Q100 127 86 124 Z",small:"M87 123 Q100 131 113 123 Q100 129 87 123 Z",open:"M85 122 Q100 138 115 122 Q100 133 85 122 Z",wide:"M84 121 Q100 141 116 121 Q100 135 84 121 Z"};
+function setSpeaking(on){ const h=$('#halo'),m=$('#mouth'); clearInterval(mouthTimer);
+  if(on){ h.classList.add('speaking'); const k=["small","open","wide","open","small","closed"]; mouthTimer=setInterval(()=>{ m.setAttribute('d',MS[k[Math.floor(Math.random()*k.length)]]); },130); }
+  else { h.classList.remove('speaking'); m.setAttribute('d',MS.closed); } }
+function setListening(on){ $('#halo').classList.toggle('listening',on); }
+setInterval(()=>{ ['lidL','lidR'].forEach(id=>{const l=$('#'+id);if(!l)return;l.setAttribute('height','16');setTimeout(()=>l.setAttribute('height','0'),150);}); },4000);
+setInterval(()=>{ const dx=(Math.random()*3-1.5); const a=$('#pupL'),b=$('#pupR'); if(a){a.setAttribute('cx',80+dx);b.setAttribute('cx',120+dx);} },2600);
+
+/* ================= VOIX ================= */
+let voices=[]; function loadVoices(){ voices=speechSynthesis.getVoices()||[]; }
+loadVoices(); if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=loadVoices;
+function pickVoice(code){ const p=voices.filter(v=>v.lang&&v.lang.toLowerCase().startsWith(code.slice(0,2).toLowerCase())); return p.find(v=>/female|femme|google|salma|zira|amelie|amélie/i.test(v.name))||p[0]||null; }
+function speak(text,code,cb){ if(!('speechSynthesis' in window)){ setSpeaking(true); setTimeout(()=>{setSpeaking(false);cb&&cb();},800); return; }
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang=code; const v=pickVoice(code); if(v)u.voice=v;
+  u.rate=.97; u.pitch=1.05; u.onstart=()=>setSpeaking(true); u.onend=()=>{setSpeaking(false);cb&&cb();}; u.onerror=()=>{setSpeaking(false);cb&&cb();}; speechSynthesis.speak(u); }
+function showCaption(t){ const c=$('#caption'); c.classList.toggle('ar',cfg.lang==='AR'); c.classList.remove('interim'); c.textContent=t; }
+
+/* ================= SESSION STATE ================= */
+let sess=null; // {type:'lesson'|'free', lesson, mode, history:[]}
+function coachTurn(reply,tip,score){
+  showCaption(reply);
+  const t=$('#tip'); if(tip&&tip.trim()){ $('#tipText').textContent=' '+tip; t.classList.add('show'); } else t.classList.remove('show');
+  const sb=$('#scorebar'); if(typeof score==='number'){ sb.classList.add('show'); $('#scoreBar').style.width=score+'%'; $('#scoreVal').textContent=score+'/100'; }
+  $('#statusChip').textContent='Nour parle…'; speak(reply,LANGS[cfg.lang].speak,()=>{ $('#statusChip').textContent='À toi 🎙️'; });
+}
+
+/* ================= BRAIN (serveur Netlify — clé cachée) ================= */
+const NOUR_ENDPOINT='/.netlify/functions/nour';
+function getCode(){ return localStorage.getItem('nour_code')||''; }
+function hasKey(){ return true; }
+function persona(){ return `Tu es Nour, une PROFESSEURE d'art oratoire, de communication et de langues — chaleureuse, vivante, exigeante avec bienveillance. Tu tutoies ton élève (Kyra). Tu n'es pas un simple outil : tu es sa prof qui la fait progresser.`; }
+function memoryBlock(){ if(!prog.memory||!prog.memory.length) return '';
+  return `\nCE QUE TU SAIS DÉJÀ DE TON ÉLÈVE (mémoire — tiens-en compte pour t'adapter et montrer que tu la connais): ${prog.memory.slice(-8).join(' | ')}`; }
+function kidBlock(){ if(!cfg.kidMode) return '';
+  return `\nMODE ENFANT (élève d'environ 10 ans): reste douce, très encourageante, simple. N'aborde QUE des sujets adaptés aux enfants (école, amis, famille, animaux, rêves, loisirs, nature, sport). Refuse gentiment tout sujet violent, effrayant, romantique/sexuel, politique conflictuel ou inapproprié, et propose aussitôt un autre sujet. Vocabulaire simple, phrases courtes. Si l'enfant exprime de la tristesse ou un problème sérieux, réponds avec bienveillance et invite-le à en parler à un adulte de confiance. Jamais de contenu pouvant choquer un enfant.`; }
+function buildSystem(){
+  const L=LANGS[cfg.lang], band=LEVELS[prog.bands[cfg.lang]||'intermediaire'];
+  const doneCount=Object.keys(prog.done).length;
+  const tipNote = cfg.lang==='EN' ? 'Le champ "tip" est en FRANÇAIS (élève débutante en anglais).' : 'Le champ "tip" est en '+(cfg.lang==='AR'?'arabe ou en français':'français')+'.';
+  let core = persona()+`
+LANGUE DE LA SÉANCE: ${L.name}. Écris "reply" UNIQUEMENT dans cette langue, de façon fluide et naturelle.
+NIVEAU de l'élève dans cette langue: ${band}. Adapte le vocabulaire, le débit et l'exigence. (${doneCount} leçons déjà maîtrisées.)
+CONTRAINTES VOIX: "reply" = 2 à 4 phrases maximum (c'est lu à voix haute). Finis presque toujours par une consigne ou une question.
+${tipNote}`+kidBlock()+memoryBlock();
+  if(sess.type==='placement'){
+    core += `\nTU FAIS UN BILAN DE NIVEAU parlé et bref en ${L.name}. Pose UNE question à la fois (3 questions maximum), de difficulté croissante, pour évaluer son aisance à l'oral. Reste chaleureuse. Après la 3e réponse (ou avant si c'est clair), mets "done": true, annonce gentiment son niveau et remplis "level" = "debutant" | "intermediaire" | "avance". Tant que le bilan continue, "level" reste null et "done" false.`;
+  } else if(sess.type==='lesson'){
+    const l=sess.lesson;
+    core += `\nTU DONNES UNE LEÇON (méthode type Duolingo, mais à l'oral). Leçon: « ${l.title} ». Objectif: ${l.obj}. Technique à transmettre: ${l.tech}. Inspiration: ${l.orator}.
+DÉROULÉ: 1) Au tout début, explique la technique en 2-3 phrases vivantes en citant l'inspiration, PUIS donne UN petit exercice concret à faire à voix haute. 2) À chaque tentative: félicite le point fort, corrige UN seul point (dans "tip"), et donne une note "score" sur 100. 3) Dès l'objectif atteint (score >= 75) OU après 2 bonnes tentatives, mets "done": true et donne LA clé à retenir en une phrase. Reste concentrée sur CETTE technique.`;
+  } else {
+    const M=MODES[sess.mode];
+    core += `\nMODE ENTRAÎNEMENT LIBRE: ${M.desc}. ${M.rule} "score" reste null et "done" false.`;
+  }
+  core += `\nQuand tu observes une force ou une faiblesse DURABLE de l'élève, ajoute une note brève et utile dans "memo" (en français, ex: "bonne accroche", "à travailler: les pauses"). Sinon "memo" vide.
+Réponds STRICTEMENT en JSON valide: {"reply":"...","tip":"...","score":null,"done":false,"memo":"","level":null}`;
+  return core;
+}
+function buildContents(){ let m=sess.history.map(h=>({role:h.role==='user'?'user':'model',parts:[{text:h.text}]})); while(m.length&&m[0].role==='model') m.shift(); return m; }
+async function askBrain(){
+  try{
+    const res=await fetch(NOUR_ENDPOINT,{method:'POST',headers:{'content-type':'application/json','x-nour-code':getCode()},
+      body:JSON.stringify({model:cfg.model,system_instruction:{parts:[{text:buildSystem()}]},contents:buildContents(),generationConfig:{maxOutputTokens:500,temperature:0.9,responseMimeType:"application/json"}})});
+    if(!res.ok){ let msg="Erreur de connexion.";
+      if(res.status===401) msg="Code d'accès requis ou invalide (⚙️).";
+      else if(res.status===429) msg="Limite gratuite atteinte, attends une minute puis reparle.";
+      else if(res.status===500) msg="Le serveur n'a pas encore sa clé (variable GEMINI_API_KEY sur Netlify).";
+      else if(res.status===404) msg="Modèle indisponible : choisis « 1.5 Flash » dans ⚙️.";
+      showWarn(msg); return {reply:msg,tip:"",score:null,done:false,memo:"",level:null}; }
+    const data=await res.json();
+    const text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+    return parseBrain(text);
+  }catch(err){ showWarn("Pas de réponse du serveur. Ouvre bien la page depuis ton adresse Netlify (https)."); return {reply:"Je n'arrive pas à joindre le serveur. Vérifie ta connexion.",tip:"",score:null,done:false,memo:"",level:null}; }
+}
+function parseBrain(text){ if(!text) return {reply:"Pardon, peux-tu répéter ?",tip:"",score:null,done:false,memo:"",level:null};
+  let m=text.match(/\{[\s\S]*\}/); if(m){ try{ const o=JSON.parse(m[0]); return {reply:(o.reply||'').trim()||text.trim(),tip:(o.tip||'').trim(),score:(typeof o.score==='number'?Math.max(0,Math.min(100,o.score)):null),done:!!o.done,memo:(o.memo||'').trim(),level:(o.level||null)}; }catch(e){} }
+  return {reply:text.replace(/```json|```/g,'').trim(),tip:"",score:null,done:false,memo:"",level:null}; }
+
+/* ================= DIALOGUE ================= */
+async function handleUser(userText){
+  sess.history.push({role:'user',text:userText});
+  showCaption('…'); setBusy(true); $('#statusChip').textContent='Nour réfléchit…';
+  const r=await askBrain(); sess.history.push({role:'coach',text:r.reply}); setBusy(false);
+  coachTurn(r.reply,r.tip,r.score);
+  if(r.memo) rememberMemo(r.memo);
+  if(sess.type==='lesson'){
+    if(typeof r.score==='number') addXp(XP_ATTEMPT);
+    if(r.done) setTimeout(()=>completeLesson(r.score),700);
+  } else if(sess.type==='placement' && r.done){
+    setTimeout(()=>completePlacement(r.level),700);
+  }
+}
+function rememberMemo(memo){ memo=memo.slice(0,80); if(prog.memory.includes(memo)) return; prog.memory.push(memo); if(prog.memory.length>12) prog.memory=prog.memory.slice(-12); saveProg(); }
+function setBusy(b){ sess.busy=b; $('#mic').classList.toggle('busy',b); }
+
+/* ================= START LESSON / FREE ================= */
+function openSession(){ showView('sess'); $('#tip').classList.remove('show'); $('#scorebar').classList.remove('show'); }
+function startLesson(l){
+  sess={type:'lesson',lesson:l,history:[],busy:false};
+  $('#sessTitle').firstChild.textContent=l.title; $('#sessSub').textContent='Leçon · '+LANGS[cfg.lang].label;
+  openSession(); touchStreak();
+  const seed = cfg.lang==='EN' ? "I'm ready, teach me this lesson and give me a first exercise."
+    : cfg.lang==='AR' ? "أنا مستعدّة، علّميني هذا الدرس وأعطيني تمرينًا أوّل." : "Je suis prête, explique-moi cette leçon et donne-moi un premier exercice.";
+  sess.history.push({role:'user',text:seed});
+  showCaption('…'); setBusy(true); $('#statusChip').textContent='Nour prépare la leçon…';
+  askBrain().then(r=>{ sess.history.push({role:'coach',text:r.reply}); setBusy(false); coachTurn(r.reply,r.tip,r.score); });
+}
+function startFree(mode){
+  sess={type:'free',mode:mode,history:[],busy:false};
+  $('#sessTitle').firstChild.textContent=MODES[mode].label+' (libre)'; $('#sessSub').textContent=LANGS[cfg.lang].label;
+  openSession(); touchStreak();
+  const seed = cfg.lang==='EN'?"Let's start, I'm ready.":cfg.lang==='AR'?"لنبدأ، أنا مستعدّة.":"On commence, je suis prête.";
+  sess.history.push({role:'user',text:seed});
+  showCaption('…'); setBusy(true); $('#statusChip').textContent='Nour prépare…';
+  askBrain().then(r=>{ sess.history.push({role:'coach',text:r.reply}); setBusy(false); coachTurn(r.reply,r.tip,r.score); });
+}
+function completeLesson(score){
+  const l=sess.lesson; const sc=(typeof score==='number')?score:80;
+  const prev=prog.done[l.id]||0; prog.done[l.id]=Math.max(prev,sc); saveProg();
+  const bonus = prev? 5 : XP_LESSON; addXp(bonus + Math.round(sc/10));
+  // auto montée de niveau
+  autoBand();
+  if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false);
+  $('#celEmoji').textContent = sc>=90?'🏆':sc>=75?'🎉':'👏';
+  $('#celTitle').textContent = 'Leçon réussie !';
+  $('#celXp').textContent = '+'+(bonus+Math.round(sc/10))+' XP · note '+sc+'/100';
+  $('#celKeep').textContent = l.orator;
+  const i=LID.indexOf(l.id); const next=(i>=0&&i<LESSONS.length-1)?LESSONS[i+1]:null;
+  $('#celNext').style.display=next?'block':'none';
+  $('#celNext').onclick=()=>{ $('#celebrate').classList.remove('show'); if(next) startLesson(next); };
+  $('#celebrate').classList.add('show');
+}
+function autoBand(){ // si 4 leçons finies avec bonne note dans la langue courante → monter d'un cran
+  const b=prog.bands[cfg.lang]||'intermediaire';
+  const scores=LESSONS.filter(l=>prog.done[l.id]).map(l=>prog.done[l.id]);
+  const avg=scores.length?scores.reduce((a,c)=>a+c,0)/scores.length:0;
+  if(scores.length>=4 && avg>=85 && b==='debutant') prog.bands[cfg.lang]='intermediaire';
+  else if(scores.length>=8 && avg>=88 && b==='intermediaire') prog.bands[cfg.lang]='avance';
+  saveProg();
+}
+
+function startPlacement(){
+  if(!hasKey()){ openSettings(); return; }
+  sess={type:'placement',history:[],busy:false};
+  $('#sessTitle').firstChild.textContent='Bilan de niveau'; $('#sessSub').textContent=LANGS[cfg.lang].label;
+  openSession(); touchStreak();
+  const seed = cfg.lang==='EN'?"I'm ready for the level check.":cfg.lang==='AR'?"أنا مستعدّة لتقييم مستواي.":"Je suis prête pour le bilan de niveau.";
+  sess.history.push({role:'user',text:seed});
+  showCaption('…'); setBusy(true); $('#statusChip').textContent='Nour prépare le bilan…';
+  askBrain().then(r=>{ sess.history.push({role:'coach',text:r.reply}); setBusy(false); coachTurn(r.reply,r.tip,r.score); if(r.memo) rememberMemo(r.memo); });
+}
+function completePlacement(level){
+  const valid=['debutant','intermediaire','avance']; const lv=valid.includes(level)?level:(prog.bands[cfg.lang]||'intermediaire');
+  prog.bands[cfg.lang]=lv; saveProg();
+  if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false);
+  $('#celEmoji').textContent='🎯'; $('#celTitle').textContent='Bilan terminé';
+  $('#celXp').textContent='Niveau '+LANGS[cfg.lang].label+' : '+LEVELS[lv];
+  $('#celKeep').textContent='Nour adaptera désormais ses leçons à ce niveau.';
+  $('#celNext').style.display='none'; $('#celebrate').classList.add('show');
+}
+
+/* ================= VOICE IN ================= */
+const SR = window.SpeechRecognition||window.webkitSpeechRecognition; let rec=null, listening=false;
+function initRec(){ if(!SR){ showWarn("Micro non géré ici. Ouvre la page (https Netlify) dans Chrome, ou écris avec ⌨️."); return null; }
+  const r=new SR(); r.lang=LANGS[cfg.lang].rec; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+  r.onstart=()=>{ listening=true; $('#mic').classList.add('on'); $('#micLabel').textContent="Je t'écoute… (touche pour finir)"; setListening(true); $('#statusChip').textContent='Écoute…'; };
+  r.onresult=(e)=>{ let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; const c=$('#caption'); c.classList.add('interim'); c.textContent=t; r._cap=t; };
+  r.onerror=(e)=>{ stopListen(); if(e.error==='not-allowed'||e.error==='service-not-allowed') showWarn("Micro bloqué. Ouvre la page en https:// (Netlify) et autorise le micro, ou écris avec ⌨️."); };
+  r.onend=()=>{ const t=(r._cap||'').trim(); listening=false; $('#mic').classList.remove('on'); setListening(false); $('#micLabel').textContent='Touche pour parler'; if(t) handleUser(t); else $('#statusChip').textContent="Je n'ai rien entendu. Réessaie 🎙️"; r._cap=''; };
+  return r; }
+function startListen(){ if(!sess||sess.busy) return; if(!rec) rec=initRec(); if(!rec) return; rec.lang=LANGS[cfg.lang].rec; rec._cap=''; try{ rec.start(); }catch(e){} }
+function stopListen(){ if(rec&&listening){ try{ rec.stop(); }catch(e){} } }
+$('#mic').onclick=()=>{ if(listening) stopListen(); else startListen(); };
+
+/* ================= VIEWS + CONTROLS ================= */
+function showView(v){ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $('#view-'+v).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); if(v==='map'){ renderMap(); renderStats(); } }
+$('#backBtn').onclick=()=>{ if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); stopListen(); showView('map'); };
+$('#repeatBtn').onclick=()=>{ const last=[...(sess?sess.history:[])].reverse().find(h=>h.role==='coach'); if(last) speak(last.text,LANGS[cfg.lang].speak); };
+$('#stopBtn').onclick=()=>{ if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); $('#statusChip').textContent='Silence 🤫'; };
+$('#keyboardBtn').onclick=()=>{ $('#textfb').classList.toggle('show'); $('#textInput').focus(); };
+$('#sendText').onclick=sendText; $('#textInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendText(); });
+function sendText(){ const v=$('#textInput').value.trim(); if(!v||!sess) return; $('#textInput').value=''; handleUser(v); }
+function showWarn(m){ const w=$('#warnbox'); w.textContent=m; w.classList.add('show'); setTimeout(()=>w.classList.remove('show'),9000); }
+
+/* ================= CHIPS / LANG / SETTINGS ================= */
+function el(em,label,active,cls){ const b=document.createElement('button'); b.className='chip'+(active?' active':'')+(cls?' '+cls:''); b.innerHTML=(em?`<span class="em">${em}</span>`:'')+label; return b; }
+function renderLangMini(){ const c=$('#langMini'); c.innerHTML=''; Object.entries(LANGS).forEach(([k,v])=>{ const b=document.createElement('button'); b.className=(cfg.lang===k?'active':''); b.innerHTML=v.em+' '+v.label; b.onclick=()=>{ cfg.lang=k; saveCfg(); renderLangMini(); if(rec)rec.lang=v.rec; toast('Langue : '+v.label); }; c.appendChild(b); }); }
+function renderFreeChips(){ const c=$('#freeChips'); c.innerHTML=''; Object.entries(MODES).forEach(([k,v])=>{ const b=el(v.em,v.label,false); b.onclick=()=>{ if(!hasKey()){ openSettings(); return;} startFree(k); }; c.appendChild(b); }); }
+function renderSettings(){
+  const lc=$('#levelChips'); lc.innerHTML=''; Object.entries(LEVELS).forEach(([k,v])=>{ const b=el('',v,(prog.bands[cfg.lang]||'intermediaire')===k,'sky'); b.onclick=()=>{ prog.bands[cfg.lang]=k; saveProg(); renderSettings(); }; lc.appendChild(b); });
+  const mc=$('#modelChips'); mc.innerHTML=''; Object.entries(MODELS).forEach(([k,v])=>{ const b=el('',v,cfg.model===k,'sky'); b.onclick=()=>{ cfg.model=k; saveCfg(); renderSettings(); }; mc.appendChild(b); });
+  const kc=$('#kidChips'); if(kc){ kc.innerHTML=''; [['1','👧 Activé'],['0','Désactivé']].forEach(([k,v])=>{ const on=(cfg.kidMode?'1':'0')===k; const b=el('',v,on,'sky'); b.onclick=()=>{ cfg.kidMode=(k==='1'); saveCfg(); renderSettings(); }; kc.appendChild(b); }); }
+  const ml=$('#memoryList'); if(ml){ ml.innerHTML = prog.memory.length? prog.memory.map(x=>'• '+x).join('<br>') : '<i>Rien encore — parle avec Nour, elle apprendra à te connaître.</i>'; }
+}
+function openSettings(){ $('#keyInput').value=localStorage.getItem('nour_code')||''; $('#keyStatus').textContent=getCode()?'✓ Code enregistré':''; renderSettings(); $('#overlay').classList.add('show'); }
+$('#gear').onclick=openSettings; $('#closeModal').onclick=()=>$('#overlay').classList.remove('show');
+$('#overlay').addEventListener('click',e=>{ if(e.target===$('#overlay')) $('#overlay').classList.remove('show'); });
+$('#saveKey').onclick=()=>{ const c=$('#keyInput').value.trim(); if(c) localStorage.setItem('nour_code',c); else localStorage.removeItem('nour_code'); $('#overlay').classList.remove('show'); toast('Réglages enregistrés ✓'); };
+$('#resetProg').onclick=()=>{ if(confirm('Effacer toute ta progression (XP, niveaux, leçons) ?')){ prog={xp:0,streak:0,lastDay:'',todayXp:0,todayDay:'',done:{},bands:{FR:'intermediaire',AR:'intermediaire',EN:'debutant'}}; saveProg(); renderStats(); renderMap(); $('#overlay').classList.remove('show'); } };
+$('#celMap').onclick=()=>{ $('#celebrate').classList.remove('show'); showView('map'); };
+$('#placementBtn').onclick=startPlacement;
+$('#clearMemory').onclick=()=>{ prog.memory=[]; saveProg(); renderSettings(); toast('Mémoire effacée'); };
+
+/* ================= INIT ================= */
+renderLangMini(); renderFreeChips(); renderMap(); renderStats();
+if(!SR) showWarn("Pour parler, ouvre la page en https:// (Netlify) dans Chrome. Sinon, utilise ⌨️.");
+if(!hasKey()) setTimeout(openSettings,500);
+</script>
+</body>
+</html>
