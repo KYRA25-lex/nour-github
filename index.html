@@ -212,7 +212,8 @@
       <div class="row">
         <button class="sbtn" id="keyboardBtn" title="Écrire">⌨️</button>
         <button class="sbtn" id="repeatBtn" title="Répéter">🔁</button>
-        <button class="sbtn" id="stopBtn" title="Silence">🤫</button>
+        <button class="sbtn" id="pauseBtn" title="Pause / Reprendre">⏸️</button>
+        <button class="sbtn" id="stopBtn" title="Stop (couper la voix)">⏹️</button>
       </div>
       <div class="textfb" id="textfb"><input id="textInput" placeholder="Écris ta réponse…" autocomplete="off"><button id="sendText">→</button></div>
       <div class="warnbox" id="warnbox"></div>
@@ -532,13 +533,13 @@ function completePlacement(level){
 /* ================= VOICE IN ================= */
 const SR = window.SpeechRecognition||window.webkitSpeechRecognition; let rec=null, listening=false;
 function initRec(){ if(!SR){ showWarn("Micro non géré ici. Ouvre la page (https Netlify) dans Chrome, ou écris avec ⌨️."); return null; }
-  const r=new SR(); r.lang=LANGS[cfg.lang].rec; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+  const r=new SR(); r.lang=LANGS[cfg.lang].rec; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
   r.onstart=()=>{ listening=true; $('#mic').classList.add('on'); $('#micLabel').textContent="Je t'écoute… (touche pour finir)"; setListening(true); $('#statusChip').textContent='Écoute…'; };
   r.onresult=(e)=>{ let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; const c=$('#caption'); c.classList.add('interim'); c.textContent=t; r._cap=t; };
   r.onerror=(e)=>{ stopListen(); if(e.error==='not-allowed'||e.error==='service-not-allowed') showWarn("Micro bloqué. Ouvre la page en https:// (Netlify) et autorise le micro, ou écris avec ⌨️."); };
   r.onend=()=>{ const t=(r._cap||'').trim(); listening=false; $('#mic').classList.remove('on'); setListening(false); $('#micLabel').textContent='Touche pour parler'; if(t) handleUser(t); else $('#statusChip').textContent="Je n'ai rien entendu. Réessaie 🎙️"; r._cap=''; };
   return r; }
-function startListen(){ if(!sess||sess.busy) return; if(!rec) rec=initRec(); if(!rec) return; rec.lang=LANGS[cfg.lang].rec; rec._cap=''; try{ rec.start(); }catch(e){} }
+function startListen(){ if(!sess||sess.busy) return; if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); if(!rec) rec=initRec(); if(!rec) return; rec.lang=LANGS[cfg.lang].rec; rec._cap=''; try{ rec.start(); }catch(e){} }
 function stopListen(){ if(rec&&listening){ try{ rec.stop(); }catch(e){} } }
 $('#mic').onclick=()=>{ if(listening) stopListen(); else startListen(); };
 
@@ -546,7 +547,8 @@ $('#mic').onclick=()=>{ if(listening) stopListen(); else startListen(); };
 function showView(v){ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $('#view-'+v).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); if(v==='map'){ renderMap(); renderStats(); } }
 $('#backBtn').onclick=()=>{ if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); stopListen(); showView('map'); };
 $('#repeatBtn').onclick=()=>{ const last=[...(sess?sess.history:[])].reverse().find(h=>h.role==='coach'); if(last) speak(last.text,LANGS[cfg.lang].speak); };
-$('#stopBtn').onclick=()=>{ if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); $('#statusChip').textContent='Silence 🤫'; };
+$('#stopBtn').onclick=()=>{ if('speechSynthesis' in window) speechSynthesis.cancel(); setSpeaking(false); $('#pauseBtn').textContent='⏸️'; $('#statusChip').textContent='Voix coupée ⏹️'; };
+$('#pauseBtn').onclick=()=>{ if(!('speechSynthesis' in window)) return; if(speechSynthesis.paused){ speechSynthesis.resume(); $('#pauseBtn').textContent='⏸️'; $('#statusChip').textContent='Nour reprend…'; } else if(speechSynthesis.speaking){ speechSynthesis.pause(); $('#pauseBtn').textContent='▶️'; $('#statusChip').textContent='En pause ⏸️'; } };
 $('#keyboardBtn').onclick=()=>{ $('#textfb').classList.toggle('show'); $('#textInput').focus(); };
 $('#sendText').onclick=sendText; $('#textInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendText(); });
 function sendText(){ const v=$('#textInput').value.trim(); if(!v||!sess) return; $('#textInput').value=''; handleUser(v); }

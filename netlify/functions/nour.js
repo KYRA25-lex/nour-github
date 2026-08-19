@@ -34,8 +34,8 @@ exports.handler = async (event) => {
   if (sys) messages.push({ role: 'system', content: sys });
   for (const t of turns) messages.push(t);
 
-  // Modèles Groq ACTUELS (2026).
-  const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it'];
+  // Modèles Groq ACTUELS (2026) — les Llama 3.x ont été retirés le 17 juin 2026.
+  const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.6-27b'];
 
   const wrapGemini = (text) => JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] });
   const spoken = (reply) => wrapGemini(JSON.stringify({ reply, tip: '', score: null, done: false, memo: '', level: null }));
